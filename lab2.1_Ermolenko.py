@@ -3,43 +3,51 @@
 # №  n w    N
 # 5  14 2000 256
 
+# Додаткове завдання: реалізувати "табличний" метод
+
 import random as r
 import math
 import matplotlib.pyplot as plt
+import numpy as np
+import datetime
 
-n = 14
-w_max = 2000
-N = 256
-w_real = [[math.cos(2 * math.pi * i * j / N) for j in range(N)] for i in range(N)]
-w_imag = [[math.sin(2 * math.pi * i * j / N) for j in range(N)] for i in range(N)]
-
-
-def graph():
-    x = [0] * N
-
-    for i in range(n):
-        A = r.randrange(2)
-        W = r.randrange(w_max)
-        f = r.randrange(1e9)
-        for t in range(N):
-            x[t] += A * math.sin(W * t + f)
-    return x
+n = 10
+w_max = 1200
+N = 64
 
 
-def dft(x: list):
-    dftt = [[sum(w_real[p][k] * x[k] for k in range(N)), sum(w_imag[p][k] * x[k] for k in range(N))] for p in range(N)]
-    return dftt
+def dft_matrix(N):
+    i, j = np.meshgrid(np.arange(N), np.arange(N))
+    return np.power(np.exp(- 2 * math.pi * 1J / N), i * j) / math.sqrt(N)
 
 
-X = graph()
-dftt = dft(X)
-data_x = []
-data_dft = []
-for i in range(len(X)):
-    data_x.append(X[i])
-    a = math.sqrt(dftt[i][0] ** 2 + dftt[i][1] ** 2)
-    data_dft.append(a)
-plt.plot([i for i in range(len(data_x))], data_x)
+# Порівняння часу виконання звичайного методу та "табличного" для 4 <= N <= 640
+def_times = []
+table_times = []
+
+for N_var in range(4, N*10+1, 16):
+    default = datetime.datetime.now()
+    w_real = [[math.cos(2 * math.pi * i * j / N_var) for j in range(N_var)] for i in range(N_var)]
+    w_imag = [[math.sin(2 * math.pi * i * j / N_var) for j in range(N_var)] for i in range(N_var)]
+    default = datetime.datetime.now() - default
+    def_times.append(default.total_seconds() * (10 ** 6) + default.microseconds)
+
+    table = datetime.datetime.now()
+    dft_matrix(N_var)
+    table = datetime.datetime.now() - table
+    table_times.append(table.total_seconds() * (10 ** 6) + table.microseconds)
+
+plt.plot([n for n in range(4, N*10+1, 16)], def_times)
 plt.show()
-plt.plot([i for i in range(len(data_dft))], data_dft)
+plt.plot([n for n in range(4, N*10+1, 16)], table_times)
 plt.show()
+exit(0)
+
+
+x = [0] * N
+
+
+for i in range(n):
+    A = r.randrange(2)
+    W = r.randrange(w_max)
+    f = r.randrange(1000000)
